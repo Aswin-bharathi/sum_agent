@@ -1,0 +1,269 @@
+/* Base Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  background: #f4f7fa;
+  color: #333;
+  line-height: 1.6;
+}
+
+.wrapper {
+  max-width: 850px;
+  margin: 40px auto;
+  padding: 30px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.header h1 {
+  font-size: 35px;
+  color: #273c75;
+  margin-bottom: 8px;
+}
+
+.header p {
+  color: #718093;
+  font-size: 16px;
+}
+
+.form-area {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+textarea {
+  width: 100%;
+  height: 220px;
+  border: 2px solid #dcdde1;
+  border-radius: 12px;
+  padding: 20px;
+  font-size: 16px;
+  resize: vertical;
+  transition: all 0.3s ease;
+}
+
+textarea:focus {
+  border-color: #40739e;
+  outline: none;
+}
+
+input[type="file"] {
+  border: 2px solid #dcdde1;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 16px;
+}
+
+select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 2px solid #dcdde1;
+  font-size: 16px;
+  background: white;
+  cursor: pointer;
+}
+
+button {
+  background: #40739e;
+  color: #fff;
+  padding: 14px;
+  border: none;
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+button:hover {
+  background: #273c75;
+}
+
+.result-card {
+  margin-top: 30px;
+  background: #f1f2f6;
+  border-radius: 15px;
+  padding: 25px;
+}
+
+.result-card h2 {
+  margin-bottom: 15px;
+  color: #2f3640;
+}
+
+pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 17px;
+  color: #353b48;
+  margin-bottom: 20px;
+}
+
+.btn-download {
+  display: inline-block;
+  background: #44bd32;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 16px;
+  transition: background 0.3s ease;
+}
+
+.btn-download:hover {
+  background: #4cd137;
+}
+
+footer {
+  text-align: center;
+  margin-top: 50px;
+  color: #718093;
+}
+
+.flash-messages {
+  margin-bottom: 20px;
+}
+
+.flash {
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+.flash.error {
+  background: #e74c3c;
+  color: white;
+}
+
+.flash.success {
+  background: #2ecc71;
+  color: white;
+}
+
+.chatbot-container {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #ccc;
+}
+
+.chatbot-container input[type="text"] {
+  width: calc(100% - 110px);
+  padding: 12px;
+  border-radius: 10px;
+  border: 2px solid #dcdde1;
+  font-size: 16px;
+  margin-right: 10px;
+}
+
+.chatbot-container button {
+  padding: 12px 20px;
+  border-radius: 10px;
+  background: #40739e;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.chatbot-container button:hover {
+  background: #273c75;
+}
+
+#chat-answer {
+  margin-top: 15px;
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  min-height: 40px;
+  font-size: 16px;
+  color: #2f3640;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .wrapper {
+    margin: 20px;
+    padding: 20px;
+  }
+
+  .header h1 {
+    font-size: 28px;
+  }
+
+  .header p {
+    font-size: 14px;
+  }
+
+  textarea {
+    height: 180px;
+    padding: 15px;
+    font-size: 14px;
+  }
+
+  input[type="file"], select {
+    font-size: 14px;
+    padding: 10px;
+  }
+
+  button, .btn-download, .chatbot-container button {
+    font-size: 14px;
+    padding: 12px;
+  }
+
+  .result-card {
+    padding: 20px;
+  }
+
+  pre {
+    font-size: 15px;
+  }
+
+  .chatbot-container input[type="text"] {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .wrapper {
+    margin: 15px;
+    padding: 15px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+
+  textarea {
+    height: 150px;
+    padding: 12px;
+    font-size: 13px;
+  }
+
+  input[type="file"], select {
+    font-size: 13px;
+    padding: 8px;
+  }
+
+  button, .btn-download, .chatbot-container button {
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  pre {
+    font-size: 14px;
+  }
+}

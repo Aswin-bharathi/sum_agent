@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>AI Class Notes Summarizer</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+</head>
+<body>
+    <div class="wrapper">
+        <header class="header">
+            <h1>📝 AI Class Notes Summarizer</h1>
+            <p>Paste your content, get a clean summary instantly!</p>
+        </header>
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-messages">
+              {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" action="/" enctype="multipart/form-data" class="form-area">
+            <textarea name="text" placeholder="Paste your content here...">{{ original_text|default('') }}</textarea>
+            <input type="file" name="file" accept=".pdf,.txt,.docx" />
+            <label for="summary_length">Summary Type:</label>
+            <select name="summary_length" id="summary_length">
+                <option value="short" {% if request.form.get('summary_length') == 'short' %}selected{% endif %}>Short (3-4 bullet points)</option>
+                <option value="medium" {% if request.form.get('summary_length') == 'medium' %}selected{% endif %}>Medium (100-150 words)</option>
+                <option value="detailed" {% if request.form.get('summary_length') == 'detailed' %}selected{% endif %}>Detailed Summary</option>
+            </select>
+            <button type="submit">✂️ Summarize</button>
+        </form>
+
+        {% if summary %}
+        <section class="result-card">
+            <h2>📑 Summarized Content:</h2>
+            <pre id="summary-content">{{ summary }}</pre>
+            <button id="tts-btn" title="Listen to summary">🔊 Read Summary</button>
+            <a href="#" id="download-btn" class="btn-download">⬇️ Download as .txt</a>
+
+            <div class="chatbot-container">
+                <h3>💬 Chat with Summary</h3>
+                <input type="text" id="chat-question" placeholder="Ask a question about the summary..." />
+                <button id="chat-submit">Ask</button>
+                <div id="chat-answer"></div>
+            </div>
+        </section>
+        {% endif %}
+
+        <footer>
+            Made with ❤️ by Asanth
+        </footer>
+    </div>
+
+    <script>
+        // Download summary as text file
+        document.addEventListener("DOMContentLoaded", () => {
+            const downloadBtn = document.getElementById("download-btn");
+            if(downloadBtn){
+                downloadBtn.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    const summaryText = document.getElementById("summary-content").innerText;
+                    const blob = new Blob([summaryText], {type: "text/plain"});
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = "summary.txt";
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                });
+            }
+
+            // Text-to-Speech Read Summary
+            const ttsBtn = document.getElementById("tts-btn");
+            if(ttsBtn){
+                ttsBtn.addEventListener("click", () => {
+                    const summaryText = document.getElementById("summary-content").innerText;
+                    if('speechSynthesis' in window){
+                        const utterance = new SpeechSynthesisUtterance(summaryText);
+                        speechSynthesis.speak(utterance);
+                    } else {
+                        alert("Sorry, your browser does not support Text-to-Speech.");
+                    }
+                });
+            }
+
+            // Chatbot interaction
+            const chatSubmit = document.getElementById("chat-submit");
+            if(chatSubmit){
+                chatSubmit.addEventListener("click", async () => {
+                    const questionInput = document.getElementById("chat-question");
+                    const answerDiv = document.getElementById("chat-answer");
+                    const question = questionInput.value.trim();
+                    if(!question){
+                        alert("Please ask a question.");
+                        return;
+                    }
+
+                    const summary = document.getElementById("summary-content").innerText;
+
+                    answerDiv.innerHTML = "⏳ Thinking...";
+                    const response = await fetch("/chatbot", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({question, summary})
+                    });
+                    const data = await response.json();
+                    answerDiv.innerHTML = `<strong>Answer:</strong> ${data.answer}`;
+                });
+            }
+        });
+    </script>
+</body>
+</html>
