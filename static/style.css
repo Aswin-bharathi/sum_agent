@@ -1,133 +1,268 @@
-body {
-  font-family: 'Segoe UI', sans-serif;
-  background: #0f2027;
-  background: linear-gradient(to right, #2c5364, #203a43, #0f2027);
-  color: #fff;
+{Add commentMore actions
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
-.container {
-  max-width: 800px;
-  margin: 30px auto;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border-radius: 20px;
-  box-shadow: 0 0 20px #000;
-}
-
-h1, h2 {
-  text-align: center;
-  color: #f1f1f1;
-}
-
-form {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-input[type="file"],
-textarea,
-select {
-  padding: 10px;
-  border: none;
-  border-radius: 10px;
-  background: #f1f1f1;
+body {
+  font-family: 'Poppins', sans-serif;
+  background: #f4f7fa;
   color: #333;
-}
-
-textarea {
-  min-height: 120px;
-  resize: vertical;
-}
-
-button {
-  padding: 12px;
-  background: #00c6ff;
-  border: none;
-  border-radius: 10px;
-  color: #fff;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.3s ease;
-}
-
-button:hover {
-  background: #0072ff;
-}
-
-.flash {
-  list-style: none;
-  padding: 0;
-  margin: 10px 0;
-}
-
-.flash li {
-  background: #ff7675;
-  padding: 10px;
-  border-radius: 10px;
-  color: #fff;
-  margin-bottom: 5px;
-}
-
-.summary-card, .chatbot-card {
-  margin-top: 30px;
-  padding: 20px;
-  background: rgba(255,255,255,0.08);
-  border-radius: 20px;
-}
-
-#summary-content {
-  margin: 20px 0;
   line-height: 1.6;
 }
 
-#chatbox {
-  max-height: 300px;
-  overflow-y: auto;
-  background: rgba(0,0,0,0.4);
-  padding: 10px;
+.wrapper {
+  max-width: 850px;
+  margin: 40px auto;
+  padding: 30px;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.header h1 {
+  font-size: 35px;
+  color: #273c75;
+  margin-bottom: 8px;
+}
+
+.header p {
+  color: #718093;
+  font-size: 16px;
+}
+
+.form-area {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+textarea {
+  width: 100%;
+  height: 220px;
+  border: 2px solid #dcdde1;
+  border-radius: 12px;
+  padding: 20px;
+  font-size: 16px;
+  resize: vertical;
+  transition: all 0.3s ease;
+}
+
+textarea:focus {
+  border-color: #40739e;
+  outline: none;
+}
+
+input[type="file"] {
+  border: 2px solid #dcdde1;
   border-radius: 10px;
-  margin-bottom: 10px;
-}
-
-.user-msg, .bot-msg {
-  margin: 8px 0;
   padding: 10px;
-  border-radius: 8px;
+  font-size: 16px;
 }
 
-.user-msg {
-  background: #3498db;
-  color: #fff;
-  align-self: flex-end;
-}
-
-.bot-msg {
-  background: #2ecc71;
-  color: #fff;
-  align-self: flex-start;
-}
-
-input[type="text"] {
+select {
+  width: 100%;
   padding: 12px;
+  border-radius: 10px;
+  border: 2px solid #dcdde1;
+  font-size: 16px;
+  background: white;
+  cursor: pointer;
+}
+
+button {
+  background: #40739e;
+  color: #fff;
+  padding: 14px;
   border: none;
   border-radius: 10px;
-  width: 100%;
-  box-sizing: border-box;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+button:hover {
+  background: #273c75;
+}
+
+.result-card {
+  margin-top: 30px;
+  background: #f1f2f6;
+  border-radius: 15px;
+  padding: 25px;
+}
+
+.result-card h2 {
+  margin-bottom: 15px;
+  color: #2f3640;
+}
+
+pre {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  font-size: 17px;
+  color: #353b48;
+  margin-bottom: 20px;
+}
+
+.btn-download {
+  display: inline-block;
+  background: #44bd32;
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 10px;
+  text-decoration: none;
+  font-size: 16px;
+  transition: background 0.3s ease;
+}
+
+.btn-download:hover {
+  background: #4cd137;
+}
+
+footer {
+  text-align: center;
+  margin-top: 50px;
+  color: #718093;
+}
+
+.flash-messages {
+  margin-bottom: 20px;
+}
+
+.flash {
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-weight: 600;
   margin-bottom: 10px;
 }
 
-@media (max-width: 600px) {
-  .container {
-    padding: 15px;
+.flash.error {
+  background: #e74c3c;
+  color: white;
+}
+
+.flash.success {
+  background: #2ecc71;
+  color: white;
+}
+
+.chatbot-container {
+  margin-top: 20px;
+  padding-top: 15px;
+  border-top: 1px solid #ccc;
+}
+
+.chatbot-container input[type="text"] {
+  width: calc(100% - 110px);
+  padding: 12px;
+  border-radius: 10px;
+  border: 2px solid #dcdde1;
+  font-size: 16px;
+  margin-right: 10px;
+}
+
+.chatbot-container button {
+  padding: 12px 20px;
+  border-radius: 10px;
+  background: #40739e;
+  color: white;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.chatbot-container button:hover {
+  background: #273c75;
+}
+
+#chat-answer {
+  margin-top: 15px;
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  min-height: 40px;
+  font-size: 16px;
+  color: #2f3640;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .wrapper {
+    margin: 20px;
+    padding: 20px;
   }
-  button {
+
+  .header h1 {
+    font-size: 28px;
+  }
+
+  .header p {
+    font-size: 14px;
+  }
+
+  textarea {
+    height: 180px;
+    padding: 15px;
+    font-size: 14px;
+  }
+
+  input[type="file"], select {
+    font-size: 14px;
     padding: 10px;
   }
+
+  button, .btn-download, .chatbot-container button {
+    font-size: 14px;
+    padding: 12px;
+  }
+
+  .result-card {
+    padding: 20px;
+  }
+
+  pre {
+    font-size: 15px;
+  }
+
+  .chatbot-container input[type="text"] {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .wrapper {
+    margin: 15px;
+    padding: 15px;
+  }
+
+  .header h1 {
+    font-size: 24px;
+  }
+
   textarea {
-    min-height: 100px;
+    height: 150px;
+    padding: 12px;
+    font-size: 13px;
+  }
+
+  input[type="file"], select {
+    font-size: 13px;
+    padding: 8px;
+  }
+
+  button, .btn-download, .chatbot-container button {
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  pre {
+    font-size: 14px;
   }
 }
