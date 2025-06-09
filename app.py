@@ -1,27 +1,19 @@
-from flask import Flask, render_template, request, redirect, url_for, send_file, jsonify, session, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonifyAdd commentMore actions
 import google.generativeai as genai
 import os
 from dotenv import load_dotenv
 from io import BytesIO
 import PyPDF2
 import docx
-import markdown
-from flask_session import Session
 
-# Load .env
 load_dotenv()
-
-# Configure Gemini API
 api_key = os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=api_key)
 model = genai.GenerativeModel(model_name="models/gemini-1.5-flash")
 
 app = Flask(__name__)
-app.secret_key = 'secretkey'
-app.config['SESSION_TYPE'] = 'filesystem'
-Session(app)
+app.secret_key = "supersecretkey"  # For flash messages
 
-# PDF Extract
 def extract_text_from_pdf(file_stream):
     reader = PyPDF2.PdfReader(file_stream)
     text = ""
@@ -31,11 +23,9 @@ def extract_text_from_pdf(file_stream):
             text += content
     return text
 
-# TXT Extract
 def extract_text_from_txt(file_stream):
     return file_stream.read().decode("utf-8")
 
-# DOCX Extract
 def extract_text_from_docx(file_stream):
     doc = docx.Document(file_stream)
     text = ""
@@ -43,20 +33,18 @@ def extract_text_from_docx(file_stream):
         text += para.text + "\n"
     return text
 
-# Summarizer
 def summarize_text(text, length):
     if length == "short":
-        prompt = f"Summarize these class notes in 3-4 bullet points:\n\n{text}"
+        prompt = f"Summarize the following class notes in 3-4 bullet points:\n\n{text}"
     elif length == "medium":
-        prompt = f"Summarize these class notes in 100-150 words:\n\n{text}"
+        prompt = f"Summarize the following class notes in a detailed paragraph form around 100-150 words:\n\n{text}"
     elif length == "detailed":
-        prompt = f"Summarize these class notes in detailed format:\n\n{text}"
+        prompt = f"Summarize the following class notes into a comprehensive, expanded summary covering all important points:\n\n{text}"
     else:
-        prompt = f"Summarize these class notes:\n\n{text}"
+        prompt = f"Summarize the following class notes:\n\n{text}"
 
     response = model.generate_content(prompt)
-    summary_markdown = markdown.markdown(response.text)
-    return summary_markdown
+    return response.text
 
 @app.route("/", methods=["GET", "POST"])
 def index():
@@ -71,53 +59,49 @@ def index():
 
         if file and file.filename != "":
             filename = file.filename
-            file_ext = filename.split(".")[-1].lower()
-
-            if file_ext == "pdf":
+            ext = filename.split(".")[-1].lower()
+            if ext == "pdf":
                 original_text = extract_text_from_pdf(file)
-            elif file_ext == "txt":
+            elif ext == "txt":
                 original_text = extract_text_from_txt(file)
-            elif file_ext == "docx":
+            elif ext == "docx":
                 original_text = extract_text_from_docx(file)
             else:
-                flash("Unsupported file format!")
-                return redirect(url_for('index'))
-
+                flash("Unsupported file format!", "error")
+                return redirect(url_for("index"))
         elif text_input:
             original_text = text_input
-
         else:
-            flash("Please upload a file or paste some text!")
-            return redirect(url_for('index'))
+            flash("Please upload a file or paste some text!", "error")
+            return redirect(url_for("index"))
 
         if original_text:
             word_count = len(original_text.split())
             summary = summarize_text(original_text, summary_length)
-            session['summary'] = summary
-            session['original_text'] = original_text
+            return render_template(
+                "index.html",
+                summary=summary,
+                word_count=word_count,
+                original_text=original_text
+            )
         else:
-            flash("No readable text found.")
-            return redirect(url_for('index'))
+            flash("No readable text found.", "error")
+            return redirect(url_for("index"))
 
-    return render_template("index.html", summary=summary, word_count=word_count)
+    return render_template("index.html")
 
 @app.route("/chatbot", methods=["POST"])
 def chatbot():
-    data = request.get_json()
-    user_msg = data.get("message")
-    prev = session.get("chat_history", "")
+    data = request.json
+    question = data.get("question")
+    summary = data.get("summary")
+    if not question or not summary:
+        return jsonify({"answer": "Invalid input."})
 
-    if not user_msg:
-        return jsonify({"response": "Please enter a valid message."})
-
-    prompt = f"This is the summary of my class notes:\n{session.get('summary','')}\n\nUser question: {user_msg}\n\nAnswer based on the summary only."
-    full_prompt = prev + "\n" + prompt
-    response = model.generate_content(full_prompt)
-
-    bot_reply = markdown.markdown(response.text)
-    session['chat_history'] = full_prompt
-
-    return jsonify({"response": bot_reply})
+    prompt = f"Answer this question based on the following summarized notes:\n\nSummary:\n{summary}\n\nQuestion:\n{question}\n\nAnswer:"
+    response = model.generate_content(prompt)
+    answer = response.text.strip()
+    return jsonify({"answer": answer})
 
 if __name__ == "__main__":
     app.run(debug=True)
