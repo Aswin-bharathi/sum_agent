@@ -1,0 +1,7 @@
+Flask
+google-generativeai
+python-dotenv
+markdown
+PyPDF2
+python-docx
+Flask-Session

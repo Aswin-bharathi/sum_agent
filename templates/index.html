@@ -44,9 +44,7 @@
     <div id="summary-content"></div>
 
     <button onclick="readSummary()">🔊 Read Summary</button>
-    <a href="data:text/plain;charset=utf-8,{{summary | safe}}" download="summary.txt">
-      <button>📥 Download Summary</button>
-    </a>
+    <button onclick="downloadCleanSummary()">📥 Download Summary</button>
   </div>
 
   <div class="chatbot-card">
@@ -70,26 +68,46 @@ function readSummary() {
   window.speechSynthesis.speak(speech);
 }
 
+function downloadCleanSummary() {
+  const rawText = document.getElementById("summary-content").innerText;
+  const blob = new Blob([rawText], { type: "text/plain;charset=utf-8" });
+  const link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "summary.txt";
+  link.click();
+}
+
 document.getElementById("userInput").addEventListener("keydown", function(e) {
   if (e.key === "Enter") sendMessage();
 });
 
 function sendMessage() {
   const userInput = document.getElementById("userInput");
-  const message = userInput.value;
+  const message = userInput.value.trim();
   if (!message) return;
 
   const chatbox = document.getElementById("chatbox");
-  chatbox.innerHTML += `<div class="user-msg">You: ${message}</div>`;
 
+  // Show user message
+  chatbox.innerHTML += `<div class="user-msg">You: ${message}</div>`;
+  chatbox.scrollTop = chatbox.scrollHeight;
+
+  // Send to backend
   fetch("/chatbot", {
     method: "POST",
     body: JSON.stringify({ message }),
     headers: { "Content-Type": "application/json" }
   })
-  .then(res => res.json())
+  .then(res => {
+    if (!res.ok) throw new Error("Server error");
+    return res.json();
+  })
   .then(data => {
     chatbox.innerHTML += `<div class="bot-msg">${data.response}</div>`;
+    chatbox.scrollTop = chatbox.scrollHeight;
+  })
+  .catch(err => {
+    chatbox.innerHTML += `<div class="bot-msg">⚠️ ${err.message}</div>`;
     chatbox.scrollTop = chatbox.scrollHeight;
   });
 
