@@ -1,122 +1,321 @@
-<!DOCTYPE html>Add commentMore actions
+<!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>AI Class Notes Summarizer</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="wrapper">
-        <header class="header">
-            <h1>📝 AI Class Notes Summarizer</h1>
-            <p>Paste your content, get a clean summary instantly!</p>
-        </header>
+    <div class="page-shell">
+        <div class="ambient ambient-left"></div>
+        <div class="ambient ambient-right"></div>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            <div class="flash-messages">
-              {% for category, message in messages %}
-                <div class="flash {{ category }}">{{ message }}</div>
-              {% endfor %}
-            </div>
-          {% endif %}
-        {% endwith %}
+        <main class="wrapper">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="flash-messages">
+                        {% for category, message in messages %}
+                            <div class="flash {{ category }}">{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
 
-        <form method="POST" action="/" enctype="multipart/form-data" class="form-area">
-            <textarea name="text" placeholder="Paste your content here...">{{ original_text|default('') }}</textarea>
-            <input type="file" name="file" accept=".pdf,.txt,.docx" />
-            <label for="summary_length">Summary Type:</label>
-            <select name="summary_length" id="summary_length">
-                <option value="short" {% if request.form.get('summary_length') == 'short' %}selected{% endif %}>Short (3-4 bullet points)</option>
-                <option value="medium" {% if request.form.get('summary_length') == 'medium' %}selected{% endif %}>Medium (100-150 words)</option>
-                <option value="detailed" {% if request.form.get('summary_length') == 'detailed' %}selected{% endif %}>Detailed Summary</option>
-            </select>
-            <button type="submit">✂️ Summarize</button>
-        </form>
+            <section class="panel">
+                <form method="POST" action="{{ url_for('index') }}" enctype="multipart/form-data" class="form-area">
+                    <div class="field-group">
+                        <label for="notes-text">Paste Notes</label>
+                        <textarea id="notes-text" name="text" placeholder="Paste your content here...">{{ text_input }}</textarea>
+                    </div>
 
-        {% if summary %}
-        <section class="result-card">
-            <h2>📑 Summarized Content:</h2>
-            <pre id="summary-content">{{ summary }}</pre>
-            <button id="tts-btn" title="Listen to summary">🔊 Read Summary</button>
-            <a href="#" id="download-btn" class="btn-download">⬇️ Download as .txt</a>
+                    <div class="upload-row">
+                        <div class="field-group file-group">
+                            <label for="file">Upload Notes</label>
+                            <input id="file" type="file" name="file" accept=".pdf,.txt,.docx">
+                        </div>
 
-            <div class="chatbot-container">
-                <h3>💬 Chat with Summary</h3>
-                <input type="text" id="chat-question" placeholder="Ask a question about the summary..." />
-                <button id="chat-submit">Ask</button>
-                <div id="chat-answer"></div>
-            </div>
-        </section>
-        {% endif %}
+                        <div class="field-group select-group">
+                            <label for="summary_length">Summary Type</label>
+                            <select name="summary_length" id="summary_length">
+                                <option value="short" {% if selected_length == 'short' %}selected{% endif %}>Short</option>
+                                <option value="medium" {% if selected_length == 'medium' %}selected{% endif %}>Medium</option>
+                                <option value="detailed" {% if selected_length == 'detailed' %}selected{% endif %}>Detailed</option>
+                            </select>
+                        </div>
+                    </div>
 
-        <footer>
-            Made with ❤️ by Asanth
-        </footer>
+                    {% if source_type == "file" and source_name %}
+                        <div class="file-chip-row">
+                            <div class="file-chip">
+                                <span class="file-chip-label">Uploaded file</span>
+                                <strong>{{ source_name }}</strong>
+                            </div>
+                            <button type="button" class="icon-button" id="preview-toggle" aria-label="Preview uploaded file">
+                                <span class="icon-eye" aria-hidden="true"></span>
+                            </button>
+                        </div>
+                    {% endif %}
+
+                    <button type="submit" class="primary-btn">Generate Summary</button>
+                </form>
+            </section>
+
+            {% if summary %}
+                <section class="result-layout single-column">
+                    <article class="result-card summary-card">
+                        <div class="section-head">
+                            <div>
+                                <span class="section-kicker">Summary</span>
+                                <h2>Generated Notes</h2>
+                            </div>
+                            <p class="meta">Original word count: {{ word_count }}</p>
+                        </div>
+
+                        <div id="summary-content" class="summary-content">{{ summary }}</div>
+
+                        <div class="actions">
+                            <button type="button" class="secondary-btn" id="tts-btn">Read Summary</button>
+                            <a href="#" id="download-txt-btn" class="download-btn">Download TXT</a>
+                            <a href="#" id="download-html-btn" class="secondary-btn">Download HTML</a>
+                            <a
+                                href="{{ url_for('chat_page') }}"
+                                id="open-chat-btn"
+                                class="primary-btn"
+                                data-summary="{{ summary|e }}"
+                                data-source-name="{{ source_name|default('Pasted Notes')|e }}"
+                            >
+                                Open Chat Workspace
+                            </a>
+                        </div>
+                    </article>
+                </section>
+            {% endif %}
+
+            <footer class="footer">Focused on faster revision and cleaner study workflows.</footer>
+        </main>
     </div>
 
+    {% if source_type == "file" and source_text %}
+        <div class="modal-backdrop hidden" id="preview-modal">
+            <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="preview-title">
+                <div class="modal-header">
+                    <div>
+                        <span class="section-kicker">Source Preview</span>
+                        <h3 id="preview-title">{{ source_name }}</h3>
+                    </div>
+                    <button type="button" class="close-btn" id="preview-close" aria-label="Close preview">&times;</button>
+                </div>
+                <div class="modal-body">{{ source_text }}</div>
+            </div>
+        </div>
+    {% endif %}
+
     <script>
-        // Download summary as text file
         document.addEventListener("DOMContentLoaded", () => {
-            const downloadBtn = document.getElementById("download-btn");
-            if(downloadBtn){
-                downloadBtn.addEventListener("click", (e) => {
-                    e.preventDefault();
-                    const summaryText = document.getElementById("summary-content").innerText;
-                    const blob = new Blob([summaryText], {type: "text/plain"});
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement("a");
-                    a.href = url;
-                    a.download = "summary.txt";
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                });
-            }
-
-            // Text-to-Speech Read Summary
+            const summaryElement = document.getElementById("summary-content");
+            const downloadTxtBtn = document.getElementById("download-txt-btn");
+            const downloadHtmlBtn = document.getElementById("download-html-btn");
             const ttsBtn = document.getElementById("tts-btn");
-            if(ttsBtn){
-                ttsBtn.addEventListener("click", () => {
-                    const summaryText = document.getElementById("summary-content").innerText;
-                    if('speechSynthesis' in window){
-                        const utterance = new SpeechSynthesisUtterance(summaryText);
-                        speechSynthesis.speak(utterance);
-                    } else {
-                        alert("Sorry, your browser does not support Text-to-Speech.");
-                    }
+            const openChatBtn = document.getElementById("open-chat-btn");
+            const previewToggle = document.getElementById("preview-toggle");
+            const previewModal = document.getElementById("preview-modal");
+            const previewClose = document.getElementById("preview-close");
+
+            const buildCleanTextExport = () => {
+                const summaryText = summaryElement ? summaryElement.innerText.trim() : "";
+                return [
+                    "AI CLASS NOTES SUMMARIZER",
+                    "",
+                    "GENERATED SUMMARY",
+                    "-----------------",
+                    summaryText
+                ].join("\n");
+            };
+
+            const buildHtmlExport = () => {
+                const summaryText = summaryElement ? summaryElement.innerText.trim() : "";
+                const escapedSummary = summaryText
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/\n/g, "<br>");
+
+                return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Summary Export</title>
+    <style>
+        body {
+            font-family: Georgia, serif;
+            background: #f4f7fb;
+            color: #162033;
+            margin: 0;
+            padding: 40px 20px;
+        }
+        .sheet {
+            max-width: 860px;
+            margin: 0 auto;
+            background: #ffffff;
+            border: 1px solid #d8dfec;
+            border-radius: 20px;
+            padding: 36px;
+            box-shadow: 0 16px 40px rgba(21, 34, 57, 0.08);
+        }
+        .eyebrow {
+            font: 700 12px/1.4 Arial, sans-serif;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #1546a0;
+        }
+        h1 {
+            margin: 12px 0 18px;
+            font-size: 34px;
+            line-height: 1.1;
+        }
+        .content {
+            font-size: 18px;
+            line-height: 1.8;
+            white-space: normal;
+        }
+    </style>
+</head>
+<body>
+    <main class="sheet">
+        <div class="eyebrow">AI Class Notes Summarizer</div>
+        <h1>Generated Summary</h1>
+        <div class="content">${escapedSummary}</div>
+    </main>
+</body>
+</html>`;
+            };
+
+            const downloadFile = (content, mimeType, filename) => {
+                const blob = new Blob([content], { type: mimeType });
+                const url = window.URL.createObjectURL(blob);
+                const anchor = document.createElement("a");
+                anchor.href = url;
+                anchor.download = filename;
+                anchor.click();
+                window.URL.revokeObjectURL(url);
+            };
+
+            if (downloadTxtBtn && summaryElement) {
+                downloadTxtBtn.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    downloadFile(buildCleanTextExport(), "text/plain", "summary.txt");
                 });
             }
 
-            // Chatbot interaction
-            const chatSubmit = document.getElementById("chat-submit");
-            if(chatSubmit){
-                chatSubmit.addEventListener("click", async () => {
-                    const questionInput = document.getElementById("chat-question");
-                    const answerDiv = document.getElementById("chat-answer");
-                    const question = questionInput.value.trim();
-                    if(!question){
-                        alert("Please ask a question.");
+            if (downloadHtmlBtn && summaryElement) {
+                downloadHtmlBtn.addEventListener("click", (event) => {
+                    event.preventDefault();
+                    downloadFile(buildHtmlExport(), "text/html", "summary.html");
+                });
+            }
+
+            const speechSupported = "speechSynthesis" in window && "SpeechSynthesisUtterance" in window;
+
+            const setTtsButtonState = (isReading) => {
+                if (!ttsBtn) {
+                    return;
+                }
+                ttsBtn.textContent = isReading ? "Stop Reading" : "Read Summary";
+                ttsBtn.setAttribute("aria-pressed", isReading ? "true" : "false");
+            };
+
+            if (ttsBtn && summaryElement) {
+                if (!speechSupported) {
+                    ttsBtn.disabled = true;
+                    ttsBtn.title = "Text-to-speech is not supported in this browser.";
+                }
+
+                const speakSummary = () => {
+                    const summaryText = summaryElement.innerText.trim();
+
+                    if (!speechSupported) {
+                        alert("Sorry, your browser does not support text-to-speech.");
                         return;
                     }
 
-                    const summary = document.getElementById("summary-content").innerText;
+                    if (!summaryText) {
+                        alert("No summary text available to read.");
+                        return;
+                    }
 
-                    answerDiv.innerHTML = "⏳ Thinking...";
-                    const response = await fetch("/chatbot", {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
-                        body: JSON.stringify({question, summary})
-                    });
-                    const data = await response.json();
-                    answerDiv.innerHTML = `<strong>Answer:</strong> ${data.answer}`;
+                    if (window.speechSynthesis.speaking) {
+                        window.speechSynthesis.cancel();
+                        setTtsButtonState(false);
+                        return;
+                    }
+
+                    const utterance = new SpeechSynthesisUtterance(summaryText);
+                    utterance.rate = 1;
+                    utterance.pitch = 1;
+
+                    const voices = window.speechSynthesis.getVoices();
+                    const englishVoice = voices.find((voice) => voice.lang && voice.lang.toLowerCase().startsWith("en"));
+                    if (englishVoice) {
+                        utterance.voice = englishVoice;
+                    }
+
+                    utterance.onstart = () => setTtsButtonState(true);
+                    utterance.onend = () => setTtsButtonState(false);
+                    utterance.onerror = () => {
+                        setTtsButtonState(false);
+                        alert("Unable to read the summary in this browser right now.");
+                    };
+
+                    window.speechSynthesis.cancel();
+                    window.speechSynthesis.speak(utterance);
+                };
+
+                if (speechSupported) {
+                    window.speechSynthesis.getVoices();
+                    window.speechSynthesis.onvoiceschanged = () => {
+                        window.speechSynthesis.getVoices();
+                    };
+                }
+
+                ttsBtn.addEventListener("click", speakSummary);
+            }
+
+            if (openChatBtn && summaryElement) {
+                openChatBtn.addEventListener("click", () => {
+                    const summary = summaryElement.innerText.trim();
+                    const sourceName = openChatBtn.dataset.sourceName || "Pasted Notes";
+                    const threadKey = `sum-agent-chat:${summary.slice(0, 120)}`;
+                    sessionStorage.setItem("sum-agent-active-summary", summary);
+                    sessionStorage.setItem("sum-agent-active-source", sourceName);
+                    sessionStorage.setItem("sum-agent-active-thread-key", threadKey);
+                });
+            }
+
+            if (previewToggle && previewModal) {
+                previewToggle.addEventListener("click", () => {
+                    previewModal.classList.remove("hidden");
+                });
+            }
+
+            if (previewClose && previewModal) {
+                previewClose.addEventListener("click", () => {
+                    previewModal.classList.add("hidden");
+                });
+            }
+
+            if (previewModal) {
+                previewModal.addEventListener("click", (event) => {
+                    if (event.target === previewModal) {
+                        previewModal.classList.add("hidden");
+                    }
                 });
             }
         });
     </script>
-    <script>window.$zoho=window.$zoho || {};$zoho.salesiq=$zoho.salesiq||{ready:function(){}}</script><script id="zsiqscript" src="https://salesiq.zohopublic.in/widget?wc=siq75eb323d2bb7c0215b73c99a1e397f6d9c4c485d5e3b3f3c1adcec88e58d5d69" defer></script>
 </body>
 </html>

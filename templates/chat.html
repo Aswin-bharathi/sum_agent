@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Summary Chat Workspace</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="page-shell chat-page-shell">
+        <div class="ambient ambient-left"></div>
+        <div class="ambient ambient-right"></div>
+
+        <main class="chat-workspace">
+            <aside class="chat-sidebar">
+                <a href="{{ url_for('index') }}" class="ghost-link">← Back to Summarizer</a>
+                <span class="eyebrow">Chat Workspace</span>
+                <h1>Ask follow-up questions naturally.</h1>
+                <p id="chat-source-label" class="sidebar-copy">Load a summary from the main page to begin chatting.</p>
+                <div class="sidebar-actions">
+                    <button type="button" id="chat-reset" class="ghost-btn">New Chat</button>
+                </div>
+                <div class="sidebar-summary-card">
+                    <span class="section-kicker">Current Summary</span>
+                    <div id="summary-preview" class="sidebar-summary-preview">No active summary yet.</div>
+                </div>
+            </aside>
+
+            <section class="chat-main-card">
+                <div class="chat-topbar">
+                    <div>
+                        <span class="section-kicker">Conversation</span>
+                        <h2>Summary Assistant</h2>
+                    </div>
+                </div>
+
+                <div id="chat-thread" class="chat-thread chat-thread-large">
+                    <div class="chat-empty">
+                        Generate a summary first, then open this workspace to continue the conversation.
+                    </div>
+                </div>
+
+                <div class="chat-composer">
+                    <input type="text" id="chat-question" placeholder="Ask a follow-up question about the summary...">
+                    <button type="button" id="chat-submit" class="primary-btn compact-btn">Send</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const summary = (sessionStorage.getItem("sum-agent-active-summary") || "").trim();
+            const sourceName = sessionStorage.getItem("sum-agent-active-source") || "Pasted Notes";
+            const storedThreadKey = sessionStorage.getItem("sum-agent-active-thread-key");
+            const threadKey = storedThreadKey || (summary ? `sum-agent-chat:${summary.slice(0, 120)}` : null);
+            const chatThread = document.getElementById("chat-thread");
+            const chatInput = document.getElementById("chat-question");
+            const chatSubmit = document.getElementById("chat-submit");
+            const chatReset = document.getElementById("chat-reset");
+            const summaryPreview = document.getElementById("summary-preview");
+            const chatSourceLabel = document.getElementById("chat-source-label");
+
+            const escapeHtml = (value) => value
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+
+            const hasSummary = Boolean(summary);
+            summaryPreview.textContent = hasSummary ? summary : "No active summary yet.";
+            chatSourceLabel.textContent = hasSummary
+                ? `Context loaded from ${sourceName}. Chat stays in this tab until you close it.`
+                : "Load a summary from the main page to begin chatting.";
+
+            const loadChatHistory = () => {
+                if (!threadKey) {
+                    return [];
+                }
+
+                try {
+                    return JSON.parse(sessionStorage.getItem(threadKey) || "[]");
+                } catch (error) {
+                    return [];
+                }
+            };
+
+            const saveChatHistory = (messages) => {
+                if (!threadKey) {
+                    return;
+                }
+                sessionStorage.setItem(threadKey, JSON.stringify(messages));
+            };
+
+            const renderChat = (messages) => {
+                if (!chatThread) {
+                    return;
+                }
+
+                if (!hasSummary) {
+                    chatThread.innerHTML = `
+                        <div class="chat-empty">
+                            Generate a summary first, then open this workspace to continue the conversation.
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (!messages.length) {
+                    chatThread.innerHTML = `
+                        <div class="chat-empty">
+                            Ask your first question. This chat stays in this tab until you close it.
+                        </div>
+                    `;
+                    return;
+                }
+
+                chatThread.innerHTML = messages.map((message) => `
+                    <article class="chat-bubble ${message.role === "user" ? "chat-user" : "chat-assistant"}">
+                        <span class="chat-role">${message.role === "user" ? "You" : "Assistant"}</span>
+                        <div class="chat-text">${escapeHtml(message.content).replace(/\n/g, "<br>")}</div>
+                    </article>
+                `).join("");
+                chatThread.scrollTop = chatThread.scrollHeight;
+            };
+
+            const setPendingState = (isPending) => {
+                chatSubmit.disabled = isPending || !hasSummary;
+                chatInput.disabled = isPending || !hasSummary;
+                chatSubmit.textContent = isPending ? "Sending..." : "Send";
+            };
+
+            const sendChat = async () => {
+                const question = chatInput.value.trim();
+                if (!question || !hasSummary) {
+                    return;
+                }
+
+                const history = loadChatHistory();
+                const optimisticHistory = [...history, { role: "user", content: question }];
+                renderChat([...optimisticHistory, { role: "assistant", content: "Thinking..." }]);
+                setPendingState(true);
+
+                try {
+                    const response = await fetch("/chatbot", {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            question,
+                            summary,
+                            history
+                        })
+                    });
+
+                    const data = await response.json();
+                    const answer = data.answer || "No answer generated.";
+                    const finalHistory = [...optimisticHistory, { role: "assistant", content: answer }];
+                    saveChatHistory(finalHistory);
+                    renderChat(finalHistory);
+                    chatInput.value = "";
+                } catch (error) {
+                    renderChat([...optimisticHistory, { role: "assistant", content: "Unable to contact the chatbot right now." }]);
+                } finally {
+                    setPendingState(false);
+                    chatInput.focus();
+                }
+            };
+
+            renderChat(loadChatHistory());
+            setPendingState(false);
+
+            chatSubmit.addEventListener("click", sendChat);
+            chatInput.addEventListener("keydown", (event) => {
+                if (event.key === "Enter") {
+                    event.preventDefault();
+                    sendChat();
+                }
+            });
+
+            chatReset.addEventListener("click", () => {
+                if (threadKey) {
+                    sessionStorage.removeItem(threadKey);
+                }
+                renderChat([]);
+                chatInput.value = "";
+                chatInput.focus();
+            });
+        });
+    </script>
+</body>
+</html>
